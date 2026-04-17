@@ -6,15 +6,23 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     U2NET_HOME=/root/.u2net
 
+# Install Python 3.11 via deadsnakes PPA (rembg>=2.0.70 requires py>=3.11)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3 python3-pip curl ca-certificates libgl1 libglib2.0-0 \
+      software-properties-common gpg-agent curl ca-certificates \
+    && add-apt-repository ppa:deadsnakes/ppa -y \
+    && apt-get update && apt-get install -y --no-install-recommends \
+      python3.11 python3.11-venv python3.11-dev \
+      libgl1 libglib2.0-0 \
+    && curl -sSL https://bootstrap.pypa.io/get-pip.py | python3.11 \
+    && ln -sf /usr/bin/python3.11 /usr/local/bin/python \
+    && ln -sf /usr/bin/python3.11 /usr/local/bin/python3 \
+    && apt-get purge -y --auto-remove software-properties-common gpg-agent \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Pre-download bria-rmbg (RMBG-2.0 ONNX) weights into the image so the
 # container has zero external dependencies at runtime / cold start.
