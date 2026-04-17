@@ -1,22 +1,16 @@
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
+    PIP_BREAK_SYSTEM_PACKAGES=1 \
     U2NET_HOME=/root/.u2net
 
-# Install Python 3.11 via deadsnakes PPA (rembg>=2.0.70 requires py>=3.11)
+# Ubuntu 24.04 ships Python 3.12 which satisfies rembg>=2.0.70 (py>=3.11).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      software-properties-common gpg-agent curl ca-certificates \
-    && add-apt-repository ppa:deadsnakes/ppa -y \
-    && apt-get update && apt-get install -y --no-install-recommends \
-      python3.11 python3.11-venv python3.11-dev \
-      libgl1 libglib2.0-0 \
-    && curl -sSL https://bootstrap.pypa.io/get-pip.py | python3.11 \
-    && ln -sf /usr/bin/python3.11 /usr/local/bin/python \
-    && ln -sf /usr/bin/python3.11 /usr/local/bin/python3 \
-    && apt-get purge -y --auto-remove software-properties-common gpg-agent \
+      python3 python3-pip curl ca-certificates \
+      libgl1 libglib2.0-0t64 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
