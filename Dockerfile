@@ -7,11 +7,20 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_BREAK_SYSTEM_PACKAGES=1 \
     U2NET_HOME=/root/.u2net
 
-# Ubuntu 24.04 ships Python 3.12 which satisfies rembg>=2.0.70 (py>=3.11).
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Ubuntu 24.04 ships Python 3.12 (satisfies rembg>=2.0.70 which needs py>=3.11).
+# Swap to the Azure-hosted apt mirror (runners live on Azure) + add retries to
+# avoid sporadic archive.ubuntu.com connection timeouts inside the build.
+RUN set -eux; \
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do \
+      [ -f "$f" ] && sed -i \
+        -e 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' \
+        -e 's|http://security.ubuntu.com|http://azure.archive.ubuntu.com|g' "$f" || true; \
+    done; \
+    apt-get -o Acquire::Retries=5 update; \
+    apt-get install -y --no-install-recommends \
       python3 python3-pip curl ca-certificates \
-      libgl1 libglib2.0-0t64 \
-    && rm -rf /var/lib/apt/lists/*
+      libgl1 libglib2.0-0t64; \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
